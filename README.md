@@ -1,6 +1,6 @@
 # AndroidChartsDemo
 
-Show case of embedding web components into Android application via DukeScript presenters.
+Show case of embedding web components into Android application via DukeScript presenters. See [tutorial](https://dukescript.com/best/practices/2017/06/11/AndroidStudio.html) for more verbose intro.
 
 ![Android app with Charts.js](http://dukescript.com/assets/as/charts-7.jpg)
 
@@ -17,13 +17,14 @@ native to web and web to native interaction works.
 
 ## Open in IDE
 
-Use [Android Studio 2.3.1](https://developer.android.com/studio/index.html) to open the sources.
+Use [Android Studio 2.3.1](https://developer.android.com/studio/index.html) to see and work with the sources. Edit, re-design,
+execute, debug the Java code.
 
 ## How this is done?
 
-Check the associated tutorial or go directly to the source:
+Check the [associated tutorial](https://dukescript.com/best/practices/2017/06/11/AndroidStudio.html) or check the source directly:
 - one simple [HTML layout page](https://github.com/dukescript/AndroidChartsDemo/blob/master/app/src/main/assets/chart.html)
-- manipulated by [main activity](https://github.com/dukescript/AndroidChartsDemo/blob/master/app/src/main/java/com/dukescript/example/androidchartsdemo/MainActivity.java#L32)
+- manipulated by [main activity](https://github.com/dukescript/AndroidChartsDemo/blob/master/app/src/main/java/com/dukescript/example/androidchartsdemo/MainActivity.java#L32) Java code
 - with just [two additional dependencies](https://github.com/dukescript/AndroidChartsDemo/blob/master/app/build.gradle#L35)
 
 ## Where to go next?
