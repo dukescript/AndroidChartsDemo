@@ -42,6 +42,8 @@ moe {
 dependencies {
     // Compile with 'jar' files in the project's 'lib' directory
     compile fileTree(dir: 'lib', include: '*.jar')
+    compile 'com.dukescript.presenters:moe:1.4'
+    compile 'com.dukescript.api:charts:0.9'
 }
 
 // Setup Eclipse

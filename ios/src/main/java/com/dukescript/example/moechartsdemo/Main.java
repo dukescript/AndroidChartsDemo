@@ -1,5 +1,12 @@
 package com.dukescript.example.moechartsdemo;
 
+import net.java.html.charts.Chart;
+import net.java.html.charts.ChartEvent;
+import net.java.html.charts.ChartListener;
+import net.java.html.charts.Color;
+import net.java.html.charts.Config;
+import net.java.html.charts.Segment;
+
 import apple.NSObject;
 import apple.coregraphics.struct.CGPoint;
 import apple.coregraphics.struct.CGRect;
@@ -31,13 +38,20 @@ import org.moe.natj.objc.ObjCRuntime;
 import org.moe.natj.objc.ann.ObjCClassName;
 import org.moe.natj.objc.ann.Selector;
 
+import java.util.List;
+import java.util.concurrent.Executor;
+
 @RegisterOnStartup
-public class Main extends NSObject implements UIApplicationDelegate {
+public class Main extends NSObject implements UIApplicationDelegate, ChartListener {
 
     private UIButton left;
     private UIButton right;
     private UIWebView webView;
     private UILabel label;
+    private Executor withView;
+    private Chart<Segment, Config> pie;
+    private int blueAmount;
+    private int redAmount;
 
     public static void main(String[] args) {
         UIKit.UIApplicationMain(0, null, null, Main.class.getName());
@@ -54,31 +68,36 @@ public class Main extends NSObject implements UIApplicationDelegate {
 
     @Override
     public boolean applicationDidFinishLaunchingWithOptions(UIApplication application, NSDictionary launchOptions) {
+        blueAmount = 1;
+        redAmount = 1;
+
         CGRect bounds = UIScreen.mainScreen().bounds();
         double tenthHeight = bounds.size().height() / 10;
         CGSize buttonSize = new CGSize(bounds.size().width() / 3, tenthHeight);
         left = UIButton.buttonWithType(UIButtonType.RoundedRect);
         left.setFrame(new CGRect(bounds.origin(), buttonSize));
-        left.setTitleForState("Left", UIControlState.Normal);
+        left.setTitleForState("Blue++", UIControlState.Normal);
         left.setTitleColorForState(UIColor.whiteColor(), UIControlState.Normal);
         left.setBackgroundColor(UIColor.blueColor());
         left.addTargetActionForControlEvents((source, event) -> {
-            label.setText("Left");
+            blueAmount++;
+            updatePie();
         }, UIControlEvents.TouchDown);
 
         right = UIButton.buttonWithType(UIButtonType.RoundedRect);
         right.setFrame(new CGRect(new CGPoint(bounds.size().width() * 2 / 3, bounds.origin().y()), buttonSize));
-        right.setTitleForState("Right", UIControlState.Normal);
+        right.setTitleForState("Red++", UIControlState.Normal);
         right.setTitleColorForState(UIColor.whiteColor(), UIControlState.Normal);
-        right.setBackgroundColor(UIColor.blueColor());
+        right.setBackgroundColor(UIColor.redColor());
         right.addTargetActionForControlEvents((source, event) -> {
-            label.setText("Right");
+            redAmount++;
+            updatePie();
         }, UIControlEvents.TouchDown);
 
         CGRect webViewBounds = new CGRect(new CGPoint(0, tenthHeight), new CGSize(bounds.size().width(), bounds.size().height() - 2 * tenthHeight));
         webView = UIWebView.alloc().initWithFrame(webViewBounds);
-        //webView.setDelegate(delegate);
         webView.setAutoresizingMask(UIViewAutoresizing.FlexibleBottomMargin | UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleRightMargin | UIViewAutoresizing.FlexibleTopMargin | UIViewAutoresizing.FlexibleWidth);
+        withView = com.dukescript.presenters.iOS.configure("GPLv3", webView, "chart.html");
 
         label = UILabel.alloc().initWithFrame(new CGRect(new CGPoint(0, bounds.size().height() - tenthHeight), new CGSize(bounds.size().width(), tenthHeight)));
         label.setText("Click the chart!");
@@ -94,11 +113,37 @@ public class Main extends NSObject implements UIApplicationDelegate {
         window.addSubview(label);
         window.makeKeyAndVisible();
 
-        NSURLRequest req = NSURLRequest.requestWithURL(NSURL.URLWithString("https://yahoo.com"));
-        webView.loadRequest(req);
+        withView.execute(() -> {
+            pie = Chart.createPie();
+            pie.addChartListener(Main.this);
+            pie.applyTo("chart");
+            updatePie();
+        });
 
         return true;
     }
+
+    void updatePie() {
+        withView.execute(() -> {
+            Segment red = new Segment("Red", redAmount, Color.valueOf("red"), Color.valueOf("magenta"));
+            Segment blue = new Segment("Blue", blueAmount, Color.valueOf("blue"), Color.valueOf("cyan"));
+            List<Segment> data = pie.getData();
+            if (data.isEmpty()) {
+                data.add(red);
+                data.add(blue);
+            } else {
+                data.set(0, red);
+                data.set(1, blue);
+            }
+        });
+        label.setText("What is the score? Click the graph!");
+    }
+
+    @Override
+    public void chartClick(ChartEvent chartEvent) {
+        label.setText("Blue " + blueAmount + " vs. " + redAmount + " Red");
+    }
+
 
     @Override
     public void setWindow(UIWindow value) {
