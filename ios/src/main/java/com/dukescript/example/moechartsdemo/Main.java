@@ -1,19 +1,23 @@
 package com.dukescript.example.moechartsdemo;
 
-import net.java.html.charts.Chart;
-import net.java.html.charts.ChartEvent;
-import net.java.html.charts.ChartListener;
-import net.java.html.charts.Color;
-import net.java.html.charts.Config;
-import net.java.html.charts.Segment;
+import com.dukescript.example.webui.WebChart;
+import com.dukescript.presenters.iOS;
+
+import org.moe.natj.general.NatJ;
+import org.moe.natj.general.Pointer;
+import org.moe.natj.general.ann.RegisterOnStartup;
+import org.moe.natj.general.ann.Runtime;
+import org.moe.natj.objc.ObjCRuntime;
+import org.moe.natj.objc.ann.ObjCClassName;
+import org.moe.natj.objc.ann.Selector;
+
+import java.util.concurrent.Executor;
 
 import apple.NSObject;
 import apple.coregraphics.struct.CGPoint;
 import apple.coregraphics.struct.CGRect;
 import apple.coregraphics.struct.CGSize;
 import apple.foundation.NSDictionary;
-import apple.foundation.NSURL;
-import apple.foundation.NSURLRequest;
 import apple.uikit.UIApplication;
 import apple.uikit.UIButton;
 import apple.uikit.UIColor;
@@ -30,28 +34,14 @@ import apple.uikit.enums.UITextAlignment;
 import apple.uikit.enums.UIViewAutoresizing;
 import apple.uikit.protocol.UIApplicationDelegate;
 
-import org.moe.natj.general.NatJ;
-import org.moe.natj.general.Pointer;
-import org.moe.natj.general.ann.Runtime;
-import org.moe.natj.general.ann.RegisterOnStartup;
-import org.moe.natj.objc.ObjCRuntime;
-import org.moe.natj.objc.ann.ObjCClassName;
-import org.moe.natj.objc.ann.Selector;
-
-import java.util.List;
-import java.util.concurrent.Executor;
-
 @RegisterOnStartup
-public class Main extends NSObject implements UIApplicationDelegate, ChartListener {
+public class Main extends NSObject implements UIApplicationDelegate {
 
     private UIButton left;
     private UIButton right;
     private UIWebView webView;
     private UILabel label;
-    private Executor withView;
-    private Chart<Segment, Config> pie;
-    private int blueAmount;
-    private int redAmount;
+    private WebChart chart;
 
     public static void main(String[] args) {
         UIKit.UIApplicationMain(0, null, null, Main.class.getName());
@@ -68,9 +58,6 @@ public class Main extends NSObject implements UIApplicationDelegate, ChartListen
 
     @Override
     public boolean applicationDidFinishLaunchingWithOptions(UIApplication application, NSDictionary launchOptions) {
-        blueAmount = 1;
-        redAmount = 1;
-
         CGRect bounds = UIScreen.mainScreen().bounds();
         double tenthHeight = bounds.size().height() / 10;
         CGSize buttonSize = new CGSize(bounds.size().width() / 3, tenthHeight);
@@ -80,8 +67,7 @@ public class Main extends NSObject implements UIApplicationDelegate, ChartListen
         left.setTitleColorForState(UIColor.whiteColor(), UIControlState.Normal);
         left.setBackgroundColor(UIColor.blueColor());
         left.addTargetActionForControlEvents((source, event) -> {
-            blueAmount++;
-            updatePie();
+            chart.plusBlue();
         }, UIControlEvents.TouchDown);
 
         right = UIButton.buttonWithType(UIButtonType.RoundedRect);
@@ -90,14 +76,13 @@ public class Main extends NSObject implements UIApplicationDelegate, ChartListen
         right.setTitleColorForState(UIColor.whiteColor(), UIControlState.Normal);
         right.setBackgroundColor(UIColor.redColor());
         right.addTargetActionForControlEvents((source, event) -> {
-            redAmount++;
-            updatePie();
+            chart.plusRed();
         }, UIControlEvents.TouchDown);
 
         CGRect webViewBounds = new CGRect(new CGPoint(0, tenthHeight), new CGSize(bounds.size().width(), bounds.size().height() - 2 * tenthHeight));
         webView = UIWebView.alloc().initWithFrame(webViewBounds);
         webView.setAutoresizingMask(UIViewAutoresizing.FlexibleBottomMargin | UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleRightMargin | UIViewAutoresizing.FlexibleTopMargin | UIViewAutoresizing.FlexibleWidth);
-        withView = com.dukescript.presenters.iOS.configure("GPLv3", webView, "chart.html");
+        Executor withView = iOS.configure("GPLv3", webView, "chart.html");
 
         label = UILabel.alloc().initWithFrame(new CGRect(new CGPoint(0, bounds.size().height() - tenthHeight), new CGSize(bounds.size().width(), tenthHeight)));
         label.setText("Click the chart!");
@@ -113,35 +98,9 @@ public class Main extends NSObject implements UIApplicationDelegate, ChartListen
         window.addSubview(label);
         window.makeKeyAndVisible();
 
-        withView.execute(() -> {
-            pie = Chart.createPie();
-            pie.addChartListener(Main.this);
-            pie.applyTo("chart");
-            updatePie();
-        });
+        chart = new iOSWebChart(withView);
 
         return true;
-    }
-
-    void updatePie() {
-        withView.execute(() -> {
-            Segment red = new Segment("Red", redAmount, Color.valueOf("red"), Color.valueOf("magenta"));
-            Segment blue = new Segment("Blue", blueAmount, Color.valueOf("blue"), Color.valueOf("cyan"));
-            List<Segment> data = pie.getData();
-            if (data.isEmpty()) {
-                data.add(red);
-                data.add(blue);
-            } else {
-                data.set(0, red);
-                data.set(1, blue);
-            }
-        });
-        label.setText("What is the score? Click the graph!");
-    }
-
-    @Override
-    public void chartClick(ChartEvent chartEvent) {
-        label.setText("Blue " + blueAmount + " vs. " + redAmount + " Red");
     }
 
 
@@ -188,4 +147,20 @@ public class Main extends NSObject implements UIApplicationDelegate, ChartListen
         }
     }
 
+    private final class iOSWebChart extends WebChart {
+
+        public iOSWebChart(Executor withView) {
+            super(withView);
+        }
+
+        @Override
+        protected void setText(String text) {
+            label.setText(text);
+        }
+
+        @Override
+        protected void runOnUiThread(Runnable command) {
+            command.run();
+        }
+    }
 }

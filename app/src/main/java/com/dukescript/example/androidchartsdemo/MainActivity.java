@@ -6,21 +6,13 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.TextView;
 
-import net.java.html.charts.Chart;
-import net.java.html.charts.ChartEvent;
-import net.java.html.charts.ChartListener;
-import net.java.html.charts.Color;
-import net.java.html.charts.Config;
-import net.java.html.charts.Segment;
+import com.dukescript.example.webui.WebChart;
+import com.dukescript.presenters.Android;
 
-import java.util.List;
 import java.util.concurrent.Executor;
 
-public class MainActivity extends AppCompatActivity implements ChartListener {
-    private Executor withView;
-    private Chart<Segment, Config> pie;
-    private int redAmount = 1;
-    private int blueAmount = 1;
+public class MainActivity extends AppCompatActivity {
+    private WebChart chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,61 +20,34 @@ public class MainActivity extends AppCompatActivity implements ChartListener {
         setContentView(R.layout.activity_main);
         WebView view = (WebView) findViewById(R.id.view);
         view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        withView = com.dukescript.presenters.Android.configure("GPLv3", view, "file:///android_asset/chart.html", null);
-        withView.execute(new Runnable() {
-            @Override
-            public void run() {
-                pie = Chart.createPie();
-                pie.addChartListener(MainActivity.this);
-                pie.applyTo("chart");
-                updatePie();
-            }
-        });
+        Executor withView = Android.configure("GPLv3", view, "file:///android_asset/chart.html", null);
+        chart = new AndroidWebChart(withView);
     }
 
-    void updatePie() {
-        withView.execute(new Runnable() {
-            @Override
-            public void run() {
-                Segment red = new Segment("Red", redAmount, Color.valueOf("red"), Color.valueOf("magenta"));
-                Segment blue = new Segment("Blue", blueAmount, Color.valueOf("blue"), Color.valueOf("cyan"));
-                List<Segment> data = pie.getData();
-                if (data.isEmpty()) {
-                    data.add(red);
-                    data.add(blue);
-                } else {
-                    data.set(0, red);
-                    data.set(1, blue);
-                }
-            }
-        });
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TextView text = (TextView) findViewById(R.id.text);
-                text.setText("What is the score? Click the graph!");
-            }
-        });
-    }
+
 
     public void plusRed(View v) {
-        redAmount++;
-        updatePie();
+        chart.plusRed();
     }
 
     public void plusBlue(View v) {
-        blueAmount++;
-        updatePie();
+        chart.plusBlue();
     }
 
-    @Override
-    public void chartClick(ChartEvent chartEvent) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TextView text = (TextView) findViewById(R.id.text);
-                text.setText("Blue " + blueAmount + " vs. " + redAmount + " Red");
-            }
-        });
+    private final class AndroidWebChart extends WebChart {
+        public AndroidWebChart(Executor withView) {
+            super(withView);
+        }
+
+        @Override
+        protected void setText(String msg) {
+            TextView text = (TextView) findViewById(R.id.text);
+            text.setText(msg);
+        }
+
+        @Override
+        protected void runOnUiThread(Runnable command) {
+            MainActivity.this.runOnUiThread(command);
+        }
     }
 }
