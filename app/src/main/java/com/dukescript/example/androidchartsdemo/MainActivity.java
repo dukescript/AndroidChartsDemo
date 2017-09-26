@@ -22,9 +22,18 @@ public class MainActivity extends AppCompatActivity {
         view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         Executor withView = Android.configure("GPLv3", view, "file:///android_asset/chart.html", null);
         chart = new AndroidWebChart(withView);
+        if (savedInstanceState != null) {
+            chart.setBlueAmount(savedInstanceState.getInt("blue", 1));
+            chart.setRedAmount(savedInstanceState.getInt("red", 1));
+        }
     }
 
-
+    @Override
+    protected void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        outState.putInt("blue", chart.getBlueAmount());
+        outState.putInt("red", chart.getRedAmount());
+    }
 
     public void plusRed(View v) {
         chart.plusRed();
@@ -33,6 +42,12 @@ public class MainActivity extends AppCompatActivity {
     public void plusBlue(View v) {
         chart.plusBlue();
     }
+
+    public void reset(View v) {
+        chart.setBlueAmount(1);
+        chart.setRedAmount(1);
+    }
+
 
     private final class AndroidWebChart extends WebChart {
         public AndroidWebChart(Executor withView) {

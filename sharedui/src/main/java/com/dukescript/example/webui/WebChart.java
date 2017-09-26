@@ -64,6 +64,24 @@ public abstract class WebChart implements ChartListener {
         updatePie();
     }
 
+    public int getBlueAmount() {
+        return blueAmount;
+    }
+
+    public int getRedAmount() {
+        return redAmount;
+    }
+
+    public void setBlueAmount(int blueAmount) {
+        this.blueAmount = blueAmount;
+        updatePie();
+    }
+
+    public void setRedAmount(int redAmount) {
+        this.redAmount = redAmount;
+        updatePie();
+    }
+
     @Override
     public final void chartClick(ChartEvent chartEvent) {
         runOnUiThread(new Runnable() {
