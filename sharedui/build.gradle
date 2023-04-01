@@ -1,8 +1,8 @@
 apply plugin: 'java'
 
 dependencies {
-    testCompile 'junit:junit:4.12'
-    compile 'com.dukescript.api:charts:1.0'
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.dukescript.api:charts:1.0'
 }
 
 sourceCompatibility = "1.7"
